@@ -70,6 +70,44 @@ const defaultProducts = [
   }
 ];
 
+const initialRecoveredGroups = [
+  {
+    product_id: 'gin',
+    members: ["Constanza Cisternas", "Renato Paredes", "Matias Olavarria", "Javiera Studer", "Maria Paula Gomez", "Isidora Riquelme"],
+    member_count: 6,
+    created_at: "2026-09-10T20:23:58.000Z",
+    created_at_chile: "10/09/2026 17:23:58"
+  },
+  {
+    product_id: 'miel',
+    members: ["Ninoska Silva", "Yarelly Inostroza", "Catalina Mesas", "Danae Aqueveque", "Aylin Tapia"],
+    member_count: 5,
+    created_at: "2026-09-10T20:24:44.000Z",
+    created_at_chile: "10/09/2026 17:24:44"
+  },
+  {
+    product_id: 'maqui',
+    members: ["Josefa Aravena", "Danielle Kemp", "Paula Saavedra", "Carolina Zenteno", "Maite Godoy"],
+    member_count: 5,
+    created_at: "2026-09-10T20:25:44.000Z",
+    created_at_chile: "10/09/2026 17:25:44"
+  },
+  {
+    product_id: 'cerveza',
+    members: ["Joaquin Perez Monsalve", "Nicolas Jara", "Luis Holguin", "Vicente Lagos", "Alexander Espindola", "Felipe Garay"],
+    member_count: 6,
+    created_at: "2026-09-10T20:26:34.000Z",
+    created_at_chile: "10/09/2026 17:26:34"
+  },
+  {
+    product_id: 'vodka',
+    members: ["Valentina Chacon", "Kerin Soto", "Maria Jose Vargas", "Genesis Barria", "Ramón Segura"],
+    member_count: 5,
+    created_at: "2026-09-10T20:27:30.000Z",
+    created_at_chile: "10/09/2026 17:27:30"
+  }
+];
+
 function getChileTimeFormatted(date = new Date()) {
   const options = {
     timeZone: 'America/Santiago',
@@ -120,16 +158,21 @@ async function initDb() {
     `);
 
     const { rows } = await pgPool.query('SELECT COUNT(*) as count FROM products');
-    if (parseInt(rows[0].count, 10) === 0) {
-      for (const prod of defaultProducts) {
-        await pgPool.query(`
-          INSERT INTO products (id, name, sach, hs6, subproductos, max_cupos, sort_order)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-          ON CONFLICT (id) DO NOTHING;
-        `, [prod.id, prod.name, prod.sach, prod.hs6, prod.subproductos, prod.max_cupos, prod.sort_order]);
-      }
       console.log('PostgreSQL: Inicializados y sembrados los productos predeterminados.');
     }
+
+    // Seed recovered groups if registrations table is empty
+    const { rows: regRows } = await pgPool.query('SELECT COUNT(*) as count FROM registrations');
+    if (parseInt(regRows[0].count, 10) === 0) {
+      for (const g of initialRecoveredGroups) {
+        await pgPool.query(`
+          INSERT INTO registrations (product_id, members, member_count, created_at, created_at_chile)
+          VALUES ($1, $2, $3, $4, $5);
+        `, [g.product_id, JSON.stringify(g.members), g.members.length, g.created_at, g.created_at_chile]);
+      }
+      console.log('PostgreSQL: Se importaron exitosamente los 5 grupos rescatados de los logs.');
+    }
+
     console.log('PostgreSQL: Conectado y listo para persistencia permanente.');
   } else {
     // Local SQLite fallback
@@ -184,6 +227,18 @@ async function initDb() {
         );
       }
       console.log('SQLite: Inicializados y sembrados los productos.');
+    }
+
+    const checkRegs = sqliteDb.prepare('SELECT COUNT(*) as count FROM registrations');
+    if (checkRegs.get().count === 0) {
+      const insertReg = sqliteDb.prepare(`
+        INSERT INTO registrations (product_id, members, member_count, created_at, created_at_chile)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      for (const g of initialRecoveredGroups) {
+        insertReg.run(g.product_id, JSON.stringify(g.members), g.members.length, g.created_at, g.created_at_chile);
+      }
+      console.log('SQLite: Importados los 5 grupos rescatados de la sesion anterior.');
     }
   }
 }
