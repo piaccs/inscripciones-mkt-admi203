@@ -60,6 +60,7 @@ async function runTests() {
   console.log('==============================================');
 
   // Reset db registrations for tests
+  await db.initPromise;
   db.db.exec('DELETE FROM registrations;');
 
   // 1. Static HTML serving

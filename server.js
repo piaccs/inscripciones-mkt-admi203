@@ -24,8 +24,8 @@ const MIME_TYPES = {
 // SSE active clients
 const sseClients = new Set();
 
-function broadcastStock() {
-  const products = db.getProductsWithStock();
+async function broadcastStock() {
+  const products = await db.getProductsWithStock();
   const data = JSON.stringify({ type: 'stock_update', products });
   for (const client of sseClients) {
     try {
@@ -115,7 +115,7 @@ async function handleRequest(req, res) {
     sseClients.add(res);
 
     // Send initial stock payload immediately
-    const products = db.getProductsWithStock();
+    const products = await db.getProductsWithStock();
     res.write(`data: ${JSON.stringify({ type: 'stock_update', products })}\n\n`);
 
     req.on('close', () => {
@@ -126,7 +126,7 @@ async function handleRequest(req, res) {
 
   // GET /api/products
   if (pathname === '/api/products' && method === 'GET') {
-    const products = db.getProductsWithStock();
+    const products = await db.getProductsWithStock();
     return sendJson(res, 200, { products });
   }
 
@@ -134,9 +134,15 @@ async function handleRequest(req, res) {
   if (pathname === '/api/register' && method === 'POST') {
     try {
       const body = await parseJsonBody(req);
-      const result = db.registerGroup(body);
+      const result = await db.registerGroup(body);
+      console.log('>>> [NUEVA INSCRIPCIÓN CONFIRMADA]:', JSON.stringify({
+        id: result.id,
+        producto: result.product_name,
+        integrantes: result.members,
+        fecha: result.created_at_chile
+      }));
       // Real-time broadcast to all connected students and admin
-      broadcastStock();
+      await broadcastStock();
       return sendJson(res, 201, result);
     } catch (err) {
       const statusCode = err.statusCode || 400;
@@ -163,7 +169,7 @@ async function handleRequest(req, res) {
     if (!checkAdminAuth(req)) {
       return sendJson(res, 401, { error: 'No autorizado. Clave de administrador incorrecta.' });
     }
-    const registrations = db.getRegistrationsChronological();
+    const registrations = await db.getRegistrationsChronological();
     return sendJson(res, 200, { registrations });
   }
 
@@ -178,9 +184,9 @@ async function handleRequest(req, res) {
       return sendJson(res, 400, { error: 'ID de inscripción inválido.' });
     }
     try {
-      const result = db.deleteRegistration(id);
+      const result = await db.deleteRegistration(id);
       // Immediately notify all users of restored quota
-      broadcastStock();
+      await broadcastStock();
       return sendJson(res, 200, result);
     } catch (err) {
       return sendJson(res, err.statusCode || 500, { error: err.message });
@@ -192,7 +198,7 @@ async function handleRequest(req, res) {
     if (!checkAdminAuth(req)) {
       return sendJson(res, 401, { error: 'No autorizado' });
     }
-    const registrations = db.getRegistrationsChronological();
+    const registrations = await db.getRegistrationsChronological();
     
     // Generate CSV UTF-8 with BOM for Excel
     const bom = '\uFEFF';
