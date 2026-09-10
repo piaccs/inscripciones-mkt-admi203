@@ -128,54 +128,75 @@ function getChileTimeFormatted(date = new Date()) {
 
 async function initDb() {
   if (isPostgres) {
-    const { Pool } = require('pg');
-    pgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
+    try {
+      const { Pool } = require('pg');
+      const isInternal = process.env.DATABASE_URL.includes('.render.internal') ||
+        (process.env.DATABASE_URL.includes('@dpg-') && !process.env.DATABASE_URL.includes('.render.com'));
 
-    await pgPool.query(`
-      CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        sach TEXT,
-        hs6 TEXT,
-        subproductos TEXT,
-        max_cupos INTEGER NOT NULL,
-        sort_order INTEGER NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS registrations (
-        id SERIAL PRIMARY KEY,
-        group_name TEXT,
-        product_id TEXT NOT NULL REFERENCES products(id),
-        past_project_name TEXT,
-        members TEXT NOT NULL,
-        member_count INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        created_at_chile TEXT NOT NULL
-      );
-    `);
-
-    const { rows } = await pgPool.query('SELECT COUNT(*) as count FROM products');
-      console.log('PostgreSQL: Inicializados y sembrados los productos predeterminados.');
-    }
-
-    // Seed recovered groups if registrations table is empty
-    const { rows: regRows } = await pgPool.query('SELECT COUNT(*) as count FROM registrations');
-    if (parseInt(regRows[0].count, 10) === 0) {
-      for (const g of initialRecoveredGroups) {
-        await pgPool.query(`
-          INSERT INTO registrations (product_id, members, member_count, created_at, created_at_chile)
-          VALUES ($1, $2, $3, $4, $5);
-        `, [g.product_id, JSON.stringify(g.members), g.members.length, g.created_at, g.created_at_chile]);
+      const poolOptions = {
+        connectionString: process.env.DATABASE_URL
+      };
+      if (!isInternal && (process.env.DATABASE_URL.includes('render.com') || process.env.DATABASE_URL.includes('sslmode=require'))) {
+        poolOptions.ssl = { rejectUnauthorized: false };
       }
-      console.log('PostgreSQL: Se importaron exitosamente los 5 grupos rescatados de los logs.');
-    }
 
-    console.log('PostgreSQL: Conectado y listo para persistencia permanente.');
-  } else {
-    // Local SQLite fallback
+      pgPool = new Pool(poolOptions);
+
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS products (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          sach TEXT,
+          hs6 TEXT,
+          subproductos TEXT,
+          max_cupos INTEGER NOT NULL,
+          sort_order INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS registrations (
+          id SERIAL PRIMARY KEY,
+          group_name TEXT,
+          product_id TEXT NOT NULL REFERENCES products(id),
+          past_project_name TEXT,
+          members TEXT NOT NULL,
+          member_count INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          created_at_chile TEXT NOT NULL
+        );
+      `);
+
+      const { rows } = await pgPool.query('SELECT COUNT(*) as count FROM products');
+      if (parseInt(rows[0].count, 10) === 0) {
+        for (const prod of defaultProducts) {
+          await pgPool.query(`
+            INSERT INTO products (id, name, sach, hs6, subproductos, max_cupos, sort_order)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (id) DO NOTHING;
+          `, [prod.id, prod.name, prod.sach, prod.hs6, prod.subproductos, prod.max_cupos, prod.sort_order]);
+        }
+        console.log('PostgreSQL: Inicializados y sembrados los productos predeterminados.');
+      }
+
+      // Seed recovered groups if registrations table is empty
+      const { rows: regRows } = await pgPool.query('SELECT COUNT(*) as count FROM registrations');
+      if (parseInt(regRows[0].count, 10) === 0) {
+        for (const g of initialRecoveredGroups) {
+          await pgPool.query(`
+            INSERT INTO registrations (product_id, members, member_count, created_at, created_at_chile)
+            VALUES ($1, $2, $3, $4, $5);
+          `, [g.product_id, JSON.stringify(g.members), g.members.length, g.created_at, g.created_at_chile]);
+        }
+        console.log('PostgreSQL: Se importaron exitosamente los 5 grupos rescatados de los logs.');
+      }
+
+      console.log('PostgreSQL: Conectado y listo para persistencia permanente.');
+      return;
+    } catch (pgErr) {
+      console.error('Error conectando a PostgreSQL, activando respaldo SQLite:', pgErr);
+    }
+  }
+
+  // Local SQLite fallback
     const { DatabaseSync } = require('node:sqlite');
     const dbPath = path.join(__dirname, 'inscripciones.db');
     sqliteDb = new DatabaseSync(dbPath);
@@ -240,7 +261,6 @@ async function initDb() {
       }
       console.log('SQLite: Importados los 5 grupos rescatados de la sesion anterior.');
     }
-  }
 }
 
 // Auto-run initDb
