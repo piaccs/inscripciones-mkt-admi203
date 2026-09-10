@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscripción Grupos | Marketing Internacional ADMI-203</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen antialiased flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md font-bold text-xl">
+          MI
+        </div>
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600">Formulario Semestral</span>
+          <h1 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Marketing Internacional ADMI-203</h1>
+        </div>
+      </div>
+      
+      <!-- Live Sync Status -->
+      <div id="connectionStatus" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-700 shadow-xs">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span>Cupos sincronizados en vivo</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 w-full flex-grow">
+
+    <!-- Information Card -->
+    <div class="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-2xl p-6 sm:p-8 text-white shadow-lg mb-8 relative overflow-hidden">
+      <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+      <div class="relative z-10">
+        <div class="inline-block px-3 py-1 bg-white/15 rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
+          Reglas de Declaración de Grupos
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Inscripción de Grupo de Trabajo</h2>
+        <p class="text-blue-100 text-sm sm:text-base leading-relaxed mb-4 max-w-2xl">
+          Declaren los integrantes de su grupo y seleccionen su producto de exportación. Cada producto dispone de exactamente <strong>2 cupos</strong> que se adjudican en estricto orden de inscripción.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm text-blue-100/90 font-medium">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            <span><strong>Obligatorio:</strong> Mínimo 5 y máximo 6 integrantes.</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            <span><strong>Cupos limitados:</strong> 2 grupos por producto.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert / Toast Banner Container -->
+    <div id="alertBox" class="hidden mb-6 p-4 rounded-xl text-sm font-medium transition-all"></div>
+
+    <!-- Form -->
+    <form id="registrationForm" class="space-y-8" onsubmit="handleSubmit(event)">
+      
+      <!-- Section 1: Members -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 custom-shadow">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-100">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold">1</span>
+              Integrantes del Grupo
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Escribe el nombre y apellido de cada integrante (mínimo 5 requeridos, máximo 6).</p>
+          </div>
+          <div id="memberCounterBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 self-start sm:self-center">
+            <span id="memberCountText">0 de 5 completados</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Integrante 1 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Integrante 1 <span class="text-rose-500 font-extrabold">*</span>
+            </label>
+            <input type="text" name="member_1" required placeholder="Nombre y Apellido"
+              class="member-input w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition text-sm text-slate-900">
+          </div>
+
+          <!-- Integrante 2 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Integrante 2 <span class="text-rose-500 font-extrabold">*</span>
+            </label>
+            <input type="text" name="member_2" required placeholder="Nombre y Apellido"
+              class="member-input w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition text-sm text-slate-900">
+          </div>
+
+          <!-- Integrante 3 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Integrante 3 <span class="text-rose-500 font-extrabold">*</span>
+            </label>
+            <input type="text" name="member_3" required placeholder="Nombre y Apellido"
+              class="member-input w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition text-sm text-slate-900">
+          </div>
+
+          <!-- Integrante 4 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Integrante 4 <span class="text-rose-500 font-extrabold">*</span>
+            </label>
+            <input type="text" name="member_4" required placeholder="Nombre y Apellido"
+              class="member-input w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition text-sm text-slate-900">
+          </div>
+
+          <!-- Integrante 5 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Integrante 5 <span class="text-rose-500 font-extrabold">* (Mínimo obligatorio)</span>
+            </label>
+            <input type="text" name="member_5" required placeholder="Nombre y Apellido"
+              class="member-input w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition text-sm text-slate-900">
+          </div>
+
+          <!-- Integrante 6 (Opcional) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+              Integrante 6 <span class="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <input type="text" name="member_6" placeholder="Nombre y Apellido (si el grupo es de 6)"
+              class="member-input w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition text-sm text-slate-900">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Products -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 custom-shadow">
+        <div class="mb-6 pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold">2</span>
+              Selección de Producto
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Elige un producto disponible. Si se agota mientras llenas el formulario, el sistema te avisará al instante.</p>
+          </div>
+          <span class="text-xs text-slate-400 italic">2 cupos máx. por producto</span>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Loaded via app.js -->
+          <div class="col-span-full py-8 text-center text-slate-400 animate-pulse">
+            Cargando catálogo de productos y cupos disponibles...
+          </div>
+        </div>
+
+        <!-- Past Semester Field (Shown conditionally) -->
+        <div id="pastProjectContainer" class="hidden mt-6 p-5 rounded-xl bg-amber-50/70 border border-amber-200 transition-all">
+          <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-2">
+            Nombre del Emprendimiento del Semestre Pasado <span class="text-rose-600">*</span>
+          </label>
+          <input type="text" id="pastProjectInput" name="past_project_name" placeholder="Ej: Eco-Empaque Sustentable SpA"
+            class="w-full px-4 py-2.5 rounded-xl border border-amber-300 bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-200 outline-none transition text-sm text-slate-900">
+          <p class="text-xs text-amber-700 mt-1.5">
+            Es obligatorio ingresar el nombre del proyecto o empresa que desarrollaron el semestre anterior.
+          </p>
+        </div>
+      </div>
+
+      <!-- Submit Section -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+        <div class="text-xs text-slate-500 text-center sm:text-left">
+          Al enviar, se registrará la <strong>fecha y hora exacta</strong> de llegada en los registros de la cátedra.
+        </div>
+        <button type="submit" id="submitBtn"
+          class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] disabled:bg-slate-300 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
+          <span id="btnText">Confirmar e Inscribir Grupo</span>
+          <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+        </button>
+      </div>
+
+    </form>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 text-center shadow-2xl border border-slate-100 transform transition-all">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h3 class="text-2xl font-extrabold text-slate-900 mb-2">¡Inscripción Confirmada!</h3>
+        <p class="text-slate-600 text-sm mb-6">Su grupo ha sido registrado exitosamente en el sistema con orden oficial de llegada.</p>
+
+        <div class="bg-slate-50 rounded-2xl p-4 text-left space-y-2.5 text-xs sm:text-sm border border-slate-200 mb-6">
+          <div class="flex justify-between border-b border-slate-200/60 pb-2">
+            <span class="text-slate-500">Fecha y Hora:</span>
+            <span id="receiptDate" class="font-bold text-slate-800"></span>
+          </div>
+          <div class="flex justify-between border-b border-slate-200/60 pb-2">
+            <span class="text-slate-500">Producto asignado:</span>
+            <span id="receiptProduct" class="font-bold text-indigo-700"></span>
+          </div>
+          <div>
+            <span class="text-slate-500 block mb-1">Integrantes registrados:</span>
+            <ul id="receiptMembers" class="list-disc list-inside font-medium text-slate-800 space-y-0.5"></ul>
+          </div>
+        </div>
+
+        <button onclick="window.location.reload()"
+          class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition">
+          Cerrar y Volver
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white py-6 mt-12 text-center text-xs text-slate-400">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>Marketing Internacional ADMI-203 &copy; Cátedra Universitaria</p>
+      <a href="/admin.html" class="text-slate-500 hover:text-indigo-600 transition font-medium flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        Acceso Docente
+      </a>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
